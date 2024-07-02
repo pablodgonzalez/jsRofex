@@ -34,7 +34,6 @@ Nota: Antes de comenzar a usar el paquete se debe inicializar el entorno con el 
 
 Todos los métodos retornan un diccionario de la respuesta `JSON`.
 
-- login: autentica al usuario en la API de Primary.
 - get_accounts:  obtiene las cuentas asociadas a un usuario.
 - get_instruments:  obtiene una lista de los Segmentos disponibles o una lista con todos los instrumentos disponibles para negociarse en Matba Rofex.
 - get_market_data: obtiene los datos del mercado en tiempo real.
@@ -45,7 +44,7 @@ Todos los métodos retornan un diccionario de la respuesta `JSON`.
 
 ## Modo de uso
 
-La inicialización se debe realizar en dos pasos. En el primer paso setea el ambiente y en el segundo paso se autentifica con servidor de Matba Rofex por medio usuario y contraseña.
+La inicialización se realizar con usuario, password y ambiente. El cliente authentica automaticamente si es necesario en cada llamada.
 
 Si la autenticación falla, la propiedad status del callback será “ERROR”.
 
@@ -53,19 +52,8 @@ Si la autenticación falla, la propiedad status del callback será “ERROR”.
 ```javascript
 import jsRofex from "rofexjs";
 
-const fes = new jsRofex(env.NODE_ENV === 'production');
+const fes = new jsRofex("fes2019", "xxyyzz", env.NODE_ENV === 'production');
 
-async function main() {
-    const loginResponse = await fes.login("fes2019", "xxyyzz");
-    if (loginResponse.status === "OK") {
-        console.log("Connected Successfully");
-    } else {
-        console.log("Error in login process");
-        console.log(loginResponse);
-    }
-}
-
-main();
 ```
 1. Obtiene las cuentas asociadas a mi usuario
 ```
@@ -258,43 +246,42 @@ const pedido = {
 
 // Function to initiate WebSocket after login
 async function iniciarWebSocket(user, password) {
-    const rofexClient = new jsRofex(true); // Assuming 'true' for production environment
+    const rofexClient = new jsRofex(user, password, true); // Assuming 'true' for production environment
 
     try {
-        // Login and get environment token
-        const loginResponse = await rofexClient.login(user, password);
+        // Initialize WebSocket
+        const socketRofex = rofexClient.connectWS();
 
-        if (loginResponse.status === "OK") {
-            const token = rofexClient.environmentToken;
-
-            // Initialize WebSocket with the obtained token
-            const socketRofex = new WebSocket("wss://api.primary.com.ar/", {
-                headers: {
-                    'x-auth-token': token
-                }
-            });
-
-            socketRofex.on('open', function open() {
-                suscribir(socketRofex, pedido);
-            });
-
-            socketRofex.on('error', function(error) {
-                console.error("Error de socket", error);
-            });
-
-            socketRofex.on('message', function(data) {
-                try {
-                    const parsedData = JSON.parse(data);
-                    console.log("socketRofex on message", parsedData);
-                } catch (error) {
-                    console.error(error);
-                }
-            });
-        } else {
-            console.log("Error in login process");
+        if (!socketRofex) {
+            return console.error("Error during login:", error);
         }
+
+        socketRofex.on('open', function open() {
+            suscribir(socketRofex, pedido);
+        });
+
+        socketRofex.on('error', function(error) {
+            console.error("Error de socket", error);
+        });
+
+        socketRofex.on('message', function(data) {
+            try {
+                const parsedData = JSON.parse(data);
+                console.log("socketRofex on message", parsedData);
+            } catch (error) {
+                console.error(error);
+            }
+        });
     } catch (error) {
         console.error("Error during login:", error);
+    }
+}
+
+// Function to subscribe
+function suscribir(socket: WebSocket, datos: any) {
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify(datos));
+        console.log("Conectado con socketRofex", JSON.stringify(datos), socket.readyState);
     }
 }
 

@@ -1,5 +1,8 @@
+import { WebSocket } from 'ws';
 
 declare module 'jsRofex' {
+
+    type Status = "OK" | "Error";
 
     interface Account {
         id: number;
@@ -8,7 +11,7 @@ declare module 'jsRofex' {
         status: boolean;
     }
 
-    interface AccountsResponse implements RofexResponse {
+    interface AccountsResponse extends RofexResponse {
         accounts: Account[];
     }
 
@@ -17,7 +20,7 @@ declare module 'jsRofex' {
         marketId: string;
     }
 
-    interface SegmentsResponse implements RofexResponse {
+    interface SegmentsResponse extends RofexResponse {
         segments: Segment[];
     }
 
@@ -50,7 +53,7 @@ declare module 'jsRofex' {
         instrumentSizePrecision?: number;
     }
 
-    interface InstrumentsResponse implements RofexResponse {
+    interface InstrumentsResponse extends RofexResponse {
         instruments: Instrument[]
     }
 
@@ -62,7 +65,7 @@ declare module 'jsRofex' {
         }
     }
 
-    interface MarketDataResponse implements RofexResponse {
+    interface MarketDataResponse extends RofexResponse {
         marketData: MarketData;
         depth: number;
         aggregated: boolean;
@@ -70,7 +73,7 @@ declare module 'jsRofex' {
 
     type Trade = any; // Define your trade properties here
 
-    interface TradeResponse implements RofexResponse {
+    interface TradeResponse extends RofexResponse {
         symbol: string;
         market: string;
         trades: Trade[];
@@ -90,7 +93,7 @@ declare module 'jsRofex' {
         ordType: string;
         side: string;
         timeInForce: number;
-        transactTime: DateTime;
+        transactTime: Date;
         avgPx: number;
         lastPx: number;
         lastQty: number;
@@ -100,15 +103,15 @@ declare module 'jsRofex' {
         tex: string;
     }
 
-    interface OrderStatusResponse implements RofexResponse {
+    interface OrderStatusResponse extends RofexResponse {
         order: OrderStatus;
     }
 
-    interface OrderAllStatusResponse implements RofexResponse {
+    interface OrderAllStatusResponse extends RofexResponse {
         orders: OrderStatus[];
     }
 
-    interface NewOrderResponse implements RofexResponse {
+    interface NewOrderResponse extends RofexResponse {
         order: {
             clientId: string;
             proprietary: string;
@@ -116,44 +119,49 @@ declare module 'jsRofex' {
     }
 
     interface RofexResponse {
-        status: string;
+        status: Status;
     }
 
-    interface ErrorResponse implements RofexResponse {
-        status: string;
+    interface ErrorResponse extends RofexResponse {
         detail: string;
     }
 
     export default class jsRofex {
-        authenticated: boolean;
-        environmentToken: string;
-        baseURL: string;
-        accounts: Record<string, Account>;
+        constructor(user: string, password: string, prod: boolean);
 
-        constructor(prod: boolean);
+        private _user: string;
+        private _password: string;
+        private _authenticated: boolean;
+        private _accessToken: string;
+        private _baseURL: string;
+        private _wssURL: string;
+        private _ws: WebSocket | null;
+        accounts: any; // Define your accounts structure here
 
-        login(user: string, password: string): Promise<{ status: "OK" } | ErrorResponse>;
+        private _login(): Promise<ErrorResponse | { status: "OK" }>;
 
-        queryGet(url: string): Promise<any>;
+        private _queryGet(url: string): Promise<any>;
 
-        getAccounts(): Promise<AccountsResponse | ErrorResponse>;
+        connectWS(): Promise<WebSocket | null>;
 
-        getSegments(): Promise<SegmentsResponse | ErrorResponse>;
+        getAccounts(): Promise<AccountsResponse>;
 
-        getInstruments(): Promise<InstrumentsResponse | ErrorResponse>;
+        getSegments(): Promise<any>; // Define your segment response structure here
 
-        getDetailedInstruments(): Promise<InstrumentsResponse | ErrorResponse>;
+        getInstruments(): Promise<InstrumentsResponse>;
 
-        getMarketData(marketId: string, symbol: string, entries?: string[], depth?: number): Promise<MarketDataResponse | ErrorResponse>;
+        getDetailedInstruments(): Promise<any>; // Define your detailed instruments response structure here
 
-        getTradeHistory(marketId: string, symbol: string, dateQuery?: string, dateFrom?: string, dateTo?: string): Promise<TradeResponse | ErrorResponse>;
+        getMarketData(marketId: string, symbol: string, entries: string[], depth: number): Promise<MarketDataResponse>;
 
-        getOrderStatus(orderId?: string, proprietary?: string): Promise<OrderStatusResponse | ErrorResponse>;
+        getTradeHistory(marketId: string, symbol: string, dateQuery: string, dateFrom: string, dateTo: string): Promise<TradeHistoryResponse>;
 
-        getAllOrdersStatus(accountId?: string): Promise<OrderAllStatusResponse | ErrorResponse>;
+        getOrderStatus(orderId: string, proprietary: string): Promise<OrderStatusResponse>;
 
-        newOrder(symbol?: string, side?: string, quantity?: number, price?: number, orderType?: string, timeInForce?: string, iceberg?: boolean, expireDate?: string | null, displayQuantity?: number | null, account?: string, cancelPrev?: boolean): Promise<NewOrderResponse | ErrorResponse>;
+        getAllOrdersStatus(accountId: string): Promise<OrdersStatusResponse>;
 
-        cancelOrder(orderId?: string, proprietary?: string): Promise<NewOrderResponse | ErrorResponse>;
+        newOrder(symbol: string, side: string, quantity: number, price: number, orderType: string, timeInForce: string, iceberg: boolean, expireDate: string | null, displayQuantity: number | null, account: string, cancelPrev: boolean): Promise<NewOrderResponse>;
+
+        cancelOrder(orderId: string, proprietary: string): Promise<CancelOrderResponse>;
     }
 }
