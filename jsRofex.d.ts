@@ -126,7 +126,7 @@ declare module 'jsRofex' {
         detail: string;
     }
 
-    export default class jsRofex {
+    export default class rofexClient {
         constructor(user: string, password: string, prod: boolean);
 
         private _user: string;

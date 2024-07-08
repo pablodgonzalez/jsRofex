@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { WebSocket } from 'ws';
 
-class jsRofex {
+class rofexClient {
     /**
      * Initializes jsRofex instance.
      * @param {string} user - User's username.
@@ -233,4 +233,4 @@ class jsRofex {
     }
 }
 
-module.exports = jsRofex;
+module.exports = rofexClient;
