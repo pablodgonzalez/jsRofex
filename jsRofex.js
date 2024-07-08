@@ -96,7 +96,7 @@ class rofexClient {
             this._ws.close();
         }
 
-        this._ws = new WebSocket(this._wssURL);
+        this._ws = new WebSocket(this._wssURL, null, { headers: { 'x-auth-token':   this._accessToken } });
 
         return this._ws;
     }
