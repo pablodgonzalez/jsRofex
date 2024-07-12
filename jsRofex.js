@@ -105,15 +105,6 @@ class rofexClient {
                 console.log('WebSocket connection opened.');
             });
     
-            this._wsClient.on('message', (data) => {
-                try {
-                    const parsedData = JSON.parse(data);
-                    console.log('WebSocket message received:', parsedData);
-                } catch (error) {
-                    console.error('Failed to parse WebSocket message:', error);
-                }
-            });
-    
             this._wsClient.on('error', (error) => {
                 console.error('WebSocket error:', error);
             });
@@ -126,15 +117,6 @@ class rofexClient {
         } catch (error) {
             console.error('Failed to connect WebSocket:', error);
             return null;
-        }
-    }
-
-    async subscribe(request) {
-        if (this._wsClient && this._wsClient.readyState === WebSocket.OPEN) {
-            this._wsClient.send(JSON.stringify(request));
-            console.log('Subscribed to:', JSON.stringify(request));
-        } else {
-            console.log('WebSocket is not open. Cannot subscribe.');
         }
     }
 

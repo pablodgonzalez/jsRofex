@@ -88,15 +88,3 @@ test('rofexClient.connectWS - successful connection', async () => {
   expect(wsInstance.on).toHaveBeenCalled();
   expect(wsInstance.send).not.toHaveBeenCalled(); // Example assertion, customize as needed
 });
-
-test('rofexClient.subscribe - successful subscription', async () => {
-  const client = new rofexClient('fakeUser', 'fakePassword', false);
-  client._authenticated = true;
-
-  const wsInstance = await client.connectWS(); // Ensure WebSocket is connected before subscribing
-  expect(wsInstance).toBeDefined();
-
-  const request = { someData: 'data' };
-  client.subscribe(request);
-  expect(wsInstance.send).toHaveBeenCalledWith(JSON.stringify(request));
-});
