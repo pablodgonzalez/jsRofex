@@ -118,12 +118,27 @@ declare module 'jsRofex' {
         };
     }
 
+    interface CancelOrderResponse extends RofexResponse {
+        order: {
+            orderId: string;
+            proprietary: string;
+        };
+    }
+
     interface RofexResponse {
         status: Status;
     }
 
     interface ErrorResponse extends RofexResponse {
         detail: string;
+    }
+
+    interface TradeHistoryResponse extends RofexResponse {
+        marketId: string;
+        symbol: string;
+        dateQuery: string;
+        dateFrom: string;
+        dateTo: string;
     }
 
     export default class rofexClient {
@@ -158,7 +173,7 @@ declare module 'jsRofex' {
 
         getOrderStatus(orderId: string, proprietary: string): Promise<OrderStatusResponse>;
 
-        getAllOrdersStatus(accountId: string): Promise<OrdersStatusResponse>;
+        getAllOrdersStatus(accountId: string): Promise<OrderAllStatusResponse>;
 
         newOrder(symbol: string, side: string, quantity: number, price: number, orderType: string, timeInForce: string, iceberg: boolean, expireDate: string | null, displayQuantity: number | null, account: string, cancelPrev: boolean): Promise<NewOrderResponse>;
 

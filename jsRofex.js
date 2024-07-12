@@ -1,5 +1,6 @@
-import axios from 'axios';
-import { WebSocket } from 'ws';
+const axios = require('axios');
+const WebSocket = require('ws');
+
 
 class rofexClient {
     /**
@@ -14,7 +15,7 @@ class rofexClient {
         this._authenticated = false;
         this._accessToken = "";
         this._domain = prod ? "://api.primary.com.ar" : "://api.remarkets.primary.com.ar";
-        this._baseURL = `http${this._domain}`;
+        this._baseURL = `https${this._domain}`;
         this._wssURL = `wss${this._domain}`;
         this._ws = null;
         this.accounts = {};
@@ -26,7 +27,6 @@ class rofexClient {
      */
     async _login() {
         const url = `${this._baseURL}/auth/getToken`;
-
         try {
             const response = await axios.post(url, null, {
                 headers: {
@@ -87,18 +87,37 @@ class rofexClient {
      * @returns {WebSocket|null} - A websocket instance authenticated or null if could't connect
      */
     async connectWS() {
+        const wsURL = this._wssURL;
+
         if (!this._authenticated) {
             const auth = await this._login();
             if (auth.status !== "OK") return null;
         }
-
-        if (this._ws !== null && this._ws.isClosed) {
-            this._ws.close();
+    
+        try {
+            this._wsClient = new WebSocket(wsURL, {
+                headers: {
+                    'x-auth-token': this._accessToken
+                }
+            });
+    
+            this._wsClient.on('open', () => {
+                console.log('WebSocket connection opened.');
+            });
+    
+            this._wsClient.on('error', (error) => {
+                console.error('WebSocket error:', error);
+            });
+    
+            this._wsClient.on('close', (code, reason) => {
+                console.log('WebSocket connection closed:', code, reason);
+            });
+    
+            return this._wsClient;
+        } catch (error) {
+            console.error('Failed to connect WebSocket:', error);
+            return null;
         }
-
-        this._ws = new WebSocket(this._wssURL, null, { headers: { 'x-auth-token':   this._accessToken } });
-
-        return this._ws;
     }
 
     /**
