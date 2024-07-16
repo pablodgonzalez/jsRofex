@@ -1,6 +1,6 @@
 import { WebSocket } from 'ws';
 
-declare module 'jsRofex' {
+declare module 'rofexjs' {
 
     type Status = "OK" | "Error";
 
