@@ -2,22 +2,22 @@ const axios = require('axios');
 const WebSocket = require('ws');
 
 
-class rofexClient {
+export class RofexClient {
     /**
      * Initializes jsRofex instance.
      * @param {string} user - User's username.
      * @param {string} password - User's password.
      * @param {boolean} prod - Indicates whether to use production environment.
      */
-    constructor(user, password, prod) {
+    constructor(user, password, baseURL) {
         this._user = user;
         this._password = password;
         this._authenticated = false;
         this._accessToken = "";
-        this._domain = prod ? "://api.primary.com.ar" : "://api.remarkets.primary.com.ar";
-        this._baseURL = `https${this._domain}`;
-        this._wssURL = `wss${this._domain}`;
-        this._ws = null;
+        this._domain = baseURL ? baseURL : process.env.BASE_URL;
+        this._baseURL = `https://${this._domain}`;
+        this._wssURL = `wss://${this._domain}`;
+        this._wsClient = null;
         this.accounts = {};
     }
 
@@ -86,38 +86,80 @@ class rofexClient {
      * Connect and authenticate a the web socket client
      * @returns {WebSocket|null} - A websocket instance authenticated or null if could't connect
      */
-    async connectWS() {
+    async connectWS(timeout = 5000) {
         const wsURL = this._wssURL;
+
+        if (this._wsClient && this._wsClient.readyState !== this._wsClient.CLOSED) {
+            return this._wsClient
+        }
 
         if (!this._authenticated) {
             const auth = await this._login();
-            if (auth.status !== "OK") return null;
+            if (auth.status !== "OK") {
+                throw auth;
+            };
         }
-    
+
         try {
             this._wsClient = new WebSocket(wsURL, {
                 headers: {
                     'x-auth-token': this._accessToken
-                }
+                },
+                handshakeTimeout: timeout
             });
-    
+
             this._wsClient.on('open', () => {
                 console.log('WebSocket connection opened.');
             });
-    
+
             this._wsClient.on('error', (error) => {
                 console.error('WebSocket error:', error);
             });
-    
+
             this._wsClient.on('close', (code, reason) => {
-                console.log('WebSocket connection closed:', code, reason);
+                console.log('WebSocket connection closed:', code, reason.toString());
             });
-    
+
             return this._wsClient;
         } catch (error) {
             console.error('Failed to connect WebSocket:', error);
-            return null;
+            throw error;
         }
+    }
+
+    async _waitForWebSocketConnect(timeout) {
+        // If the WebSocket is already open, resolve immediately
+        if (this._wsClient.readyState === WebSocket.OPEN) {
+            return Promise.resolve();
+        }
+
+        // If the WebSocket is already closed or closing, reject immediately
+        if (this._wsClient.readyState === WebSocket.CLOSED || this._wsClient.readyState === WebSocket.CLOSING) {
+            return Promise.reject(new Error('WebSocket is closed or closing.'));
+        }
+
+        return new Promise((resolve, reject) => {
+            // Create a timeout promise that rejects after the specified time
+            const timeoutId = setTimeout(() => {
+                reject(new Error('WebSocket connection timed out'));
+            }, timeout);
+
+            this._wsClient.once('open', () => {
+                clearTimeout(timeoutId); // Clear the timeout if the connection is successful
+                resolve();
+            });
+
+            this._wsClient.once('error', (err) => {
+                clearTimeout(timeoutId);
+                reject(err);
+            });
+        });
+    }
+
+    async wsSend(message, timeout = 5000) {
+        await this.connectWS(timeout);
+        await this._waitForWebSocketConnect(timeout);
+        await this._wsClient.send(message);
     }
 
     /**
@@ -250,6 +292,26 @@ class rofexClient {
         const url = `${this._baseURL}/rest/order/cancelById?clOrdId=${orderId}&proprietary=${proprietary}`;
         return await this._queryGet(url);
     }
+
+    async subscribeMarketdata(instrumentIds = [], entries = [], level = 1, depth = 1) {
+
+        const maxBlockSize = 1000;
+        for (let i = 0; i < instrumentIds.length; i += maxBlockSize) {
+            const block = instrumentIds.slice(i, i + maxBlockSize);
+            const subscription = {
+                type: "smd",
+                level, // level 1 de info para el libro de ordenes
+                entries: Array.from(entries),
+                products: block.map((instrumentId) => ({
+                    symbol: instrumentId.symbol,
+                    marketId: instrumentId.marketId
+                })),
+                depth //el mejor precio de compra y venta, a diferencia de los primeros 10
+            };
+
+            this.wsSend(JSON.stringify(subscription))
+        }
+    }
 }
 
-module.exports = rofexClient;
+module.exports = RofexClient;

@@ -1,182 +1,199 @@
 import { WebSocket } from 'ws';
 
-declare module 'rofexjs' {
+export type Status = "OK" | "Error";
 
-    type Status = "OK" | "Error";
+export type Entry =
+    "BI" /*BIDS: Mejor oferta de compra en el Book*/ |
+    "OF" /*OFFERS: Mejor oferta de venta en el Book*/ |
+    "LA" /*LAST: Último precio operado en el mercado*/ |
+    "OP" /*OPENING PRICE: Precio de apertura*/ |
+    "CL" /*CLOSING PRICE: Precio de cierre de la rueda de negociación anterior*/ |
+    "SE" /*SETTLEMENT PRICE: Precio de ajuste (solo para futuros)*/ |
+    "HI" /*TRADING SESSION HIGH PRICE: Precio máximo de la rueda*/ |
+    "LO" /*TRADING SESSION LOW PRICE: Precio mínimo de la rueda*/ |
+    "TV" /*TRADE VOLUME: Volumen operado en contratos/nominales para ese security*/ |
+    "OI" /*OPEN INTEREST: Interés abierto (solo para futuros)*/ |
+    "IV" /*OPEN INTEREST: Interés abierto (solo para futuros)*/ |
+    "EV" /*TRADE EFFECTIVE VOLUME: Volumen efectivo de negociación para ese security*/ |
+    "NV" /*NOMINAL VOLUME: Volumen nominal de negociación para ese security*/ |
+    "ACP" /*AUCTION PRICE: Precio de cierre del día corriente*/
 
-    interface Account {
-        id: number;
-        name: string;
-        brokerId: number;
-        status: boolean;
-    }
+export interface Account {
+    id: number;
+    name: string;
+    brokerId: number;
+    status: boolean;
+}
 
-    interface AccountsResponse extends RofexResponse {
-        accounts: Account[];
-    }
+export interface AccountsResponse extends RofexResponse {
+    accounts: Account[];
+}
 
-    interface Segment {
-        marketSegmentId: string;
-        marketId: string;
-    }
+export interface Segment {
+    marketSegmentId: string;
+    marketId: string;
+}
 
-    interface SegmentsResponse extends RofexResponse {
-        segments: Segment[];
-    }
+export interface SegmentsResponse extends RofexResponse {
+    segments: Segment[];
+}
 
-    interface InstrumentId {
-        marketId: string;
-        symbol: string;
-    }
+export interface InstrumentId {
+    marketId: string;
+    symbol: string;
+}
 
-    interface Instrument {
-        instrumentId: InstrumentId;
-        cficode: string;
-        symbol?: string | null;
-        segment?: Segment;
-        lowLimitPrice?: number;
-        highLimitPrice?: number;
-        minPriceIncrement?: number;
-        minTradeVol?: number;
-        maxTradeVol?: number;
-        tickSize?: number;
-        contractMultiplier?: number;
-        roundLot?: number;
-        priceConvertionFactor?: number;
-        maturityDate?: number;
-        currency?: string;
-        orderTypes?: string | null;
-        timesInForce?: number | null;
-        securityType?: string | null;
-        settlType?: string | null;
-        instrumentPricePrecision?: number;
-        instrumentSizePrecision?: number;
-    }
+export interface Instrument {
+    instrumentId: InstrumentId;
+    cficode: string;
+    symbol?: string | null;
+    segment?: Segment;
+    lowLimitPrice?: number;
+    highLimitPrice?: number;
+    minPriceIncrement?: number;
+    minTradeVol?: number;
+    maxTradeVol?: number;
+    tickSize?: number;
+    contractMultiplier?: number;
+    roundLot?: number;
+    priceConvertionFactor?: number;
+    maturityDate?: number;
+    currency?: string;
+    orderTypes?: string | null;
+    timesInForce?: number | null;
+    securityType?: string | null;
+    settlType?: string | null;
+    instrumentPricePrecision?: number;
+    instrumentSizePrecision?: number;
+}
 
-    interface InstrumentsResponse extends RofexResponse {
-        instruments: Instrument[]
-    }
+export interface InstrumentsResponse extends RofexResponse {
+    instruments: Instrument[];
+}
 
-    interface MarketData {
-        [key: string]: {
-            price: number;
-            size: number;
-            date?: number; // Optional if present in some cases
-        }
-    }
-
-    interface MarketDataResponse extends RofexResponse {
-        marketData: MarketData;
-        depth: number;
-        aggregated: boolean;
-    }
-
-    type Trade = any; // Define your trade properties here
-
-    interface TradeResponse extends RofexResponse {
-        symbol: string;
-        market: string;
-        trades: Trade[];
-    }
-
-    interface OrderStatus {
-        orderId: string;
-        clOrdId: string;
-        proprietary: string;
-        execId: string;
-        accountId: {
-            id: string;
-        };
-        instrumentId: InstrumentId;
+export interface MarketData {
+    [key: string]: {
         price: number;
-        orderQty: number;
-        ordType: string;
-        side: string;
-        timeInForce: number;
-        transactTime: Date;
-        avgPx: number;
-        lastPx: number;
-        lastQty: number;
-        cumQty: number;
-        leavesQty: number;
-        status: string;
-        tex: string;
+        size: number;
+        date?: number; // Optional if present in some cases
     }
+}
 
-    interface OrderStatusResponse extends RofexResponse {
-        order: OrderStatus;
-    }
+export interface MarketDataResponse extends RofexResponse {
+    marketData: MarketData;
+    depth: number;
+    aggregated: boolean;
+}
 
-    interface OrderAllStatusResponse extends RofexResponse {
-        orders: OrderStatus[];
-    }
+export interface Trade {
+    price: Number;
+    size: number;
+    datetime: string
+    servertime: Number
+    symbol: String
+}
 
-    interface NewOrderResponse extends RofexResponse {
-        order: {
-            clientId: string;
-            proprietary: string;
-        };
-    }
+export interface TradeResponse extends RofexResponse {
+    symbol: string;
+    market: string;
+    trades: Trade[];
+}
 
-    interface CancelOrderResponse extends RofexResponse {
-        order: {
-            orderId: string;
-            proprietary: string;
-        };
-    }
+export interface OrderStatus {
+    orderId: string;
+    clOrdId: string;
+    proprietary: string;
+    execId: string;
+    accountId: {
+        id: string;
+    };
+    instrumentId: InstrumentId;
+    price: number;
+    orderQty: number;
+    ordType: string;
+    side: string;
+    timeInForce: number;
+    transactTime: Date;
+    avgPx: number;
+    lastPx: number;
+    lastQty: number;
+    cumQty: number;
+    leavesQty: number;
+    status: string;
+    tex: string;
+}
 
-    interface RofexResponse {
-        status: Status;
-    }
+export interface OrderStatusResponse extends RofexResponse {
+    order: OrderStatus;
+}
 
-    interface ErrorResponse extends RofexResponse {
-        detail: string;
-    }
+export interface OrderAllStatusResponse extends RofexResponse {
+    orders: OrderStatus[];
+}
 
-    interface TradeHistoryResponse extends RofexResponse {
-        marketId: string;
-        symbol: string;
-        dateQuery: string;
-        dateFrom: string;
-        dateTo: string;
-    }
+export interface NewOrderResponse extends RofexResponse {
+    order: {
+        clientId: string;
+        proprietary: string;
+    };
+}
 
-    export default class rofexClient {
-        constructor(user: string, password: string, prod: boolean);
+export interface CancelOrderResponse extends RofexResponse {
+    order: {
+        orderId: string;
+        proprietary: string;
+    };
+}
 
-        private _user: string;
-        private _password: string;
-        private _authenticated: boolean;
-        private _accessToken: string;
-        private _baseURL: string;
-        private _wssURL: string;
-        private _ws: WebSocket | null;
-        accounts: any; // Define your accounts structure here
+export interface RofexResponse {
+    status: Status;
+}
 
-        private _login(): Promise<ErrorResponse | { status: "OK" }>;
+export interface ErrorResponse extends RofexResponse {
+    detail: string;
+}
 
-        private _queryGet(url: string): Promise<any>;
+export default class RofexClient {
+    constructor(user: string, password: string, baseURL: string | null | undefined);
 
-        connectWS(): Promise<WebSocket | null>;
+    private _user: string;
+    private _password: string;
+    private _authenticated: boolean;
+    private _accessToken: string;
+    private _baseURL: string;
+    private _wssURL: string;
+    private _ws: WebSocket | null;
+    accounts: Account[]; // Define your accounts structure here
 
-        getAccounts(): Promise<AccountsResponse>;
+    private _login(): Promise<ErrorResponse | { status: "OK" }>;
 
-        getSegments(): Promise<any>; // Define your segment response structure here
+    private _queryGet(url: string): Promise<any>;
 
-        getInstruments(): Promise<InstrumentsResponse>;
+    connectWS(): Promise<WebSocket>;
 
-        getDetailedInstruments(): Promise<any>; // Define your detailed instruments response structure here
+    private _waitForWebSocketConnect(timeout: number): Promise<void>;
 
-        getMarketData(marketId: string, symbol: string, entries: string[], depth: number): Promise<MarketDataResponse>;
+    wsSend(data: BufferLike, timeout: number): Promise<void>;
 
-        getTradeHistory(marketId: string, symbol: string, dateQuery: string, dateFrom: string, dateTo: string): Promise<TradeHistoryResponse>;
+    getAccounts(): Promise<AccountsResponse>;
 
-        getOrderStatus(orderId: string, proprietary: string): Promise<OrderStatusResponse>;
+    getSegments(): Promise<any>; // Define your segment response structure here
 
-        getAllOrdersStatus(accountId: string): Promise<OrderAllStatusResponse>;
+    getInstruments(): Promise<InstrumentsResponse>;
 
-        newOrder(symbol: string, side: string, quantity: number, price: number, orderType: string, timeInForce: string, iceberg: boolean, expireDate: string | null, displayQuantity: number | null, account: string, cancelPrev: boolean): Promise<NewOrderResponse>;
+    getDetailedInstruments(): Promise<any>; // Define your detailed instruments response structure here
 
-        cancelOrder(orderId: string, proprietary: string): Promise<CancelOrderResponse>;
-    }
+    getMarketData(marketId: string, symbol: string, entries: Set<Entry>, depth: number): Promise<MarketDataResponse>;
+
+    getTradeHistory(marketId: string, symbol: string, dateQuery: string, dateFrom: string, dateTo: string): Promise<TradeResponse>;
+
+    getOrderStatus(orderId: string, proprietary: string): Promise<OrderStatusResponse>;
+
+    getAllOrdersStatus(accountId: string): Promise<OrderAllStatusResponse>;
+
+    newOrder(symbol: string, side: string, quantity: number, price: number, orderType: string, timeInForce: string, iceberg: boolean, expireDate: string | null, displayQuantity: number | null, account: string, cancelPrev: boolean): Promise<NewOrderResponse>;
+
+    cancelOrder(orderId: string, proprietary: string): Promise<CancelOrderResponse>;
+
+    subscribeMarketdata(instrumentsIds: InstrumentId[], entries: Set<Entry>, level: number, depth: number): Promise<WebSocket>;
 }

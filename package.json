@@ -2,8 +2,8 @@
   "name": "rofexjs",
   "version": "1.2.0",
   "description": "--- # Documentación Rofexjs ---",
-  "main": "jsRofex.js",
-  "types": "jsRofex.d.ts",
+  "main": "./jsRofex.js",
+  "types": "./jsRofex.d.ts",
   "dependencies": {
     "axios": "^1.7.2",
     "ws": "^8.17.1"

@@ -227,69 +227,35 @@ async function cancelOrder() {
 
 11. Conectarse por Web Socket
 ```
-import jsRofex from './jsRofex'; // Assuming jsRofex.js file is in the same directory
+async function SubscribeMarketData(){
 
-const baseURL = "https://api.primary.com.ar/";
+    const simbolosProd = [
+        { symbol: "DOJun21", marketId: "ROFX" },
+        { symbol: "DODic21", marketId: "ROFX" }
+    ];
 
-const simbolosProd = [
-    { symbol: "DOJun21", marketId: "ROFX" },
-    { symbol: "DODic21", marketId: "ROFX" }
-];
+    const entries = ["BI", "OF", "LA", "IV", "NV", "OI"]
 
-const pedido = {
-    "type": "smd",
-    "level": 1,
-    "entries": ["BI", "OF", "LA", "IV", "NV", "OI"],
-    "products": simbolosProd,
-    "depth": 10
-};
+    const level = 1;
+    const depth = 10;
 
-// Function to initiate WebSocket after login
-async function iniciarWebSocket(user, password) {
-    const rofexClient = new jsRofex(user, password, true); // Assuming 'true' for production environment
-
-    try {
-        // Initialize WebSocket
-        const socketRofex = rofexClient.connectWS();
-
-        if (!socketRofex) {
-            return console.error("Error during login:", error);
+    socketRofex = fes.connectWS();
+    socketRofex.on('message', function(data) {
+        try {
+            const parsedData = JSON.parse(data);
+            console.log("socketRofex on message", parsedData);
+        } catch (error) {
+            console.error(error);
         }
+    });
 
-        socketRofex.on('open', function open() {
-            suscribir(socketRofex, pedido);
-        });
-
-        socketRofex.on('error', function(error) {
-            console.error("Error de socket", error);
-        });
-
-        socketRofex.on('message', function(data) {
-            try {
-                const parsedData = JSON.parse(data);
-                console.log("socketRofex on message", parsedData);
-            } catch (error) {
-                console.error(error);
-            }
-        });
-    } catch (error) {
-        console.error("Error during login:", error);
-    }
+    fes.subcribeMarketData(simbolosProd,entries, level, depth )
 }
-
-// Function to subscribe
-function suscribir(socket: WebSocket, datos: any) {
-    if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify(datos));
-        console.log("Conectado con socketRofex", JSON.stringify(datos), socket.readyState);
-    }
-}
-
-// Example usage
-iniciarWebSocket("userXXX", "XXXXXX");
 ```
 
 ## Agradecimientos
 
 El desarrollo de este software fue impulsado por [Primary](https://www.primary.com.ar/) como parte de una iniciativa de Código Abierto de [Matba Rofex](https://www.rofex.com.ar/).
+
+TypeScript Version for [@pablodgonzalez](https://github.com/pablodgonzalez)
 
