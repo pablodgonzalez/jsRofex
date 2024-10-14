@@ -211,7 +211,7 @@ export class RofexClient {
      * @returns {Object} - Response object containing market data or error details.
      */
     async getMarketData(marketId = "ROFX", symbol, entries = [], depth = 1) {
-        const url = `${this._baseURL}/rest/marketdata/get?marketId=${marketId}&symbol=${symbol}&entries=${entries.join()}&depth=${depth}`;
+        const url = `${this._baseURL}/rest/marketdata/get?marketId=${marketId}&symbol=${symbol}&entries=${Array.from(entries).join()}&depth=${depth}`;
         return await this._queryGet(url);
     }
 
