@@ -2,7 +2,7 @@ const axios = require('axios');
 const WebSocket = require('ws');
 
 
-export class RofexClient {
+class RofexClient {
     /**
      * Initializes jsRofex instance.
      * @param {string} user - User's username.
